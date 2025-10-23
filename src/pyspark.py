@@ -77,7 +77,7 @@ SELECT
     SUM(oi.quantity * oi.unit_price) AS daily_revenue,
     SUM(SUM(oi.quantity * oi.unit_price)) OVER (ORDER BY o.order_date) AS running_total_revenue
 FROM orders o
-JOIN order_items oi ON o.order_id = oi.order_id
+JOIN order_items ohi ON o.order_id = oi.order_id
 GROUP BY o.order_date
 ORDER BY o.order_date
 """)
