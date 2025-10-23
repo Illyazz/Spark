@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 from pyspark.sql import SparkSession
 
-spark = SparkSession.builder.appName("FullSQLQueries").getOrCreate()
+spark = SparkSession.builder.appName("FullSQLQueriesWithOutput").getOrCreate()
 
 # === Load all tables ===
 orders = spark.read.csv("/tmp/DE011025/Gharza/sqoop/orders", header=True, inferSchema=True)
@@ -18,12 +19,15 @@ products.createOrReplaceTempView("products")
 shippers.createOrReplaceTempView("shippers")
 statuses.createOrReplaceTempView("order_statuses")
 
-# === SQL Queries ===
+print("✅ Tables loaded and registered successfully!\n")
 
-# 1️⃣ Preview
+# === 1️⃣ Preview order_items ===
+print("=== Preview: order_items ===")
+order_items.show(10, truncate=False)
+
 spark.sql("SELECT * FROM order_items").write.mode("overwrite").option("header", "true").csv("hdfs:///user/Consultants/tmp/DE011025/sql_results/order_items_preview")
 
-# 2️⃣ Customer total spending
+# === 2️⃣ Customer total spending ===
 spark.sql("""
 CREATE OR REPLACE VIEW v_customer_order_value AS
 SELECT
@@ -37,9 +41,12 @@ GROUP BY c.customer_id, c.first_name, c.last_name
 ORDER BY total_spent DESC
 """)
 
+print("\n=== Customer Total Spending ===")
+spark.sql("SELECT * FROM v_customer_order_value").show(10, truncate=False)
+
 spark.sql("SELECT * FROM v_customer_order_value").write.mode("overwrite").option("header", "true").csv("hdfs:///user/Consultants/tmp/DE011025/sql_results/v_customer_order_value")
 
-# 3️⃣ Rank customers by spending
+# === 3️⃣ Rank customers by spending ===
 spark.sql("""
 CREATE OR REPLACE VIEW v_customer_rank AS
 SELECT
@@ -50,9 +57,12 @@ SELECT
 FROM v_customer_order_value
 """)
 
+print("\n=== Customer Rank by Spending ===")
+spark.sql("SELECT * FROM v_customer_rank").show(10, truncate=False)
+
 spark.sql("SELECT * FROM v_customer_rank").write.mode("overwrite").option("header", "true").csv("hdfs:///user/Consultants/tmp/DE011025/sql_results/v_customer_rank")
 
-# 4️⃣ Top products
+# === 4️⃣ Top products ===
 spark.sql("""
 CREATE OR REPLACE VIEW v_top_products AS
 SELECT
@@ -67,9 +77,12 @@ GROUP BY p.product_id, p.name
 ORDER BY total_revenue DESC
 """)
 
+print("\n=== Top Products by Revenue ===")
+spark.sql("SELECT * FROM v_top_products").show(10, truncate=False)
+
 spark.sql("SELECT * FROM v_top_products").write.mode("overwrite").option("header", "true").csv("hdfs:///user/Consultants/tmp/DE011025/sql_results/v_top_products")
 
-# 5️⃣ Running total revenue
+# === 5️⃣ Running total revenue ===
 spark.sql("""
 CREATE OR REPLACE VIEW v_revenue_running_total AS
 SELECT
@@ -77,12 +90,15 @@ SELECT
     SUM(oi.quantity * oi.unit_price) AS daily_revenue,
     SUM(SUM(oi.quantity * oi.unit_price)) OVER (ORDER BY o.order_date) AS running_total_revenue
 FROM orders o
-JOIN order_items ohi ON o.order_id = oi.order_id
+JOIN order_items oi ON o.order_id = oi.order_id
 GROUP BY o.order_date
 ORDER BY o.order_date
 """)
 
-#spark.sql("SELECT * FROM v_revenue_running_total").write.mode("overwrite").option("header", "true").csv("hdfs:///user/Consultants/tmp/DE011025/sql_results/v_revenue_running_total")
+print("\n=== Running Total Revenue (by Order Date) ===")
+spark.sql("SELECT * FROM v_revenue_running_total").show(10, truncate=False)
 
-print("✅ All SQL results written to HDFS successfully.")
+spark.sql("SELECT * FROM v_revenue_running_total").write.mode("overwrite").option("header", "true").csv("hdfs:///user/Consultants/tmp/DE011025/sql_results/v_revenue_running_total")
+
+print("\n✅ All SQL results written to HDFS and printed to console successfully.")
 spark.stop()
