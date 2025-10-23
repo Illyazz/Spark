@@ -4,12 +4,13 @@ from pyspark.sql import SparkSession
 spark = SparkSession.builder.appName("FullSQLQueriesWithOutput").getOrCreate()
 
 # === Load all tables ===
-orders = spark.read.csv("/tmp/DE011025/Gharza/sqoop/orders", header=True, inferSchema=True)
-order_items = spark.read.csv("/tmp/DE011025/Gharza/sqoop/order_items", header=True, inferSchema=True)
-customers = spark.read.csv("/tmp/DE011025/Gharza/sqoop/customers", header=True, inferSchema=True)
-products = spark.read.csv("/tmp/DE011025/Gharza/sqoop/products", header=True, inferSchema=True)
-shippers = spark.read.csv("/tmp/DE011025/Gharza/sqoop/shippers", header=True, inferSchema=True)
-statuses = spark.read.csv("/tmp/DE011025/Gharza/sqoop/order_statuses", header=True, inferSchema=True)
+orders = spark.read.csv("/user/Consultants/sqoop_data/orders", header=True, inferSchema=True)
+#
+#order_items = spark.read.csv("/tmp/DE011025/Gharza/sqoop/order_items", header=True, inferSchema=True)
+customers = spark.read.csv("/user/Consultants/sqoop_data/customers", header=True, inferSchema=True)
+products = spark.read.csv("/user/Consultants/sqoop_data/products", header=True, inferSchema=True)
+shippers = spark.read.csv("/user/Consultants/sqoop_data/shippers", header=True, inferSchema=True)
+statuses = spark.read.csv("/user/Consultants/sqoop_data/order_statuses", header=True, inferSchema=True)
 
 # Register as SQL views
 orders.createOrReplaceTempView("orders")
